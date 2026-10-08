@@ -111,7 +111,6 @@ const addEmployee = async (req, res) => {
             last_name,
             username,
             role_id,
-            employee_number,
             password,
             email,
             address,
@@ -129,13 +128,36 @@ const addEmployee = async (req, res) => {
 
         const hashedPassword = await argon2.hash(password);
 
+        //get franchise code
+        const [franchiseRows] = await connection.query(`SELECT franchise_code FROM franchises WHERE id = ?`,
+            [franchise_id]
+        );
+        const franchiseCode = franchiseRows[0].franchise_code;
+
+        //get last employee of that franchise
+        const [employeeRows] = await connection.query(`SELECT employee_number FROM employees WHERE franchise_id = ? ORDER BY id DESC LIMIT 1`,
+            [franchise_id]
+        );
+
+        //generate employee number
+        let employee_number;
+        if (employeeRows.length === 0) {
+            employee_number = `${franchiseCode}-EMP0001`;
+        } else {
+            const lastNumber = employeeRows[0].employee_number;
+            const sequence = parseInt(lastNumber.split("EMP")[1]);
+
+            employee_number = `${franchiseCode}-EMP${String(sequence + 1).padStart(4, 0)}`;
+        }
+
+
         const contactValidation = contactValidator.safeParse(incomingData);
         if (!contactValidation.success) {
             const errors = contactValidation.error.issues.map(err => err.message);
             return res.status(400).json({ errors });
         }
 
-        const { content_type, company_id, phone, status_id } = contactValidation.data;
+        const { phone, status_id } = contactValidation.data;
 
         const sql = `INSERT INTO employees (
             franchise_id,
@@ -180,14 +202,14 @@ const addEmployee = async (req, res) => {
         const employeeId = employeeResult.insertId;
 
         await connection.query(`INSERT INTO contacts (contact_type, employee_id, company_id, franchise_id, phone, status_id) 
-            VALUES (?, ?, ?, ?, ?, ?)`,[
-                "Employee",
-                employeeId,
-                null,
-                null,
-                phone,
-                status_id
-            ]);
+            VALUES (?, ?, ?, ?, ?, ?)`, [
+            "Employee",
+            employeeId,
+            null,
+            null,
+            phone,
+            status_id
+        ]);
 
         await connection.commit();
         return res.status(201).json({ message: 'Record inserted successfully.' });

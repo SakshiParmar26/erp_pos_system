@@ -26,8 +26,6 @@ const employeeValidator = z.object({
         .int()
         .positive(),
 
-    employee_number: z.string()
-        .min(4),
 
     password: z.string()
         .min(1, "Password must be at least 8 characters")

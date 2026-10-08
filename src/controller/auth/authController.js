@@ -46,9 +46,22 @@ const login = async (req, res) => {
             return res.status(401).json({error:'Invalid credentials.'});
         }
 
+        const [permissionRows] = await pool.query(`SELECT
+            p.permission_name
+            FROM permissions p
+            INNER JOIN role_permissions rp ON p.id=rp.permission_id
+            WHERE rp.role_id=?`,
+            [employee.role_id]
+        );
+
+        const permissions = permissionRows.map(
+            item => item.permission_name
+        );
+
         const token=jwt.sign({
             employeeId:employee.id,
             role_id:employee.role_id,
+            permissions
         },
         process.env.JWT_SECRET,
         {expiresIn:'1d'}    

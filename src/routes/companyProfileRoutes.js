@@ -1,9 +1,9 @@
 const express = require("express");
-const authentication= require("../middleware/authentication.js");
-const {getCompanyProfile}=require("../controller/companyProfileController.js");
+const { authentication } = require("../middleware/authentication.js");
+const { getCompanyProfile } = require("../controller/companyProfileController.js");
 
-const router=express.Router();
+const router = express.Router();
 
-router.get('/',authentication,getCompanyProfile);
+router.get('/', authentication, getCompanyProfile);
 
-module.exports=router;
+module.exports = router;

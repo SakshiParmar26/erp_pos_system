@@ -6,15 +6,16 @@ const {
     addEmployee,
     changePassword
 } = require('../controller/employeeController.js');
-const authentication = require('../middleware/authentication.js');
+const { authentication } = require('../middleware/authentication.js');
+const { authorizeRoles } = require('../middleware/authorizeRoles.js');
 const upload = require('../middleware/uploadImage.js');
 
 const router = express.Router();
 
 router.patch('/changePassword', authentication, changePassword);
-router.get('/profileImage/:id', authentication, getProfileImage);
-router.get('/', authentication, getAllEmployee);
-router.get('/:id', authentication, getSingleEmployee);
+router.get('/profileImage/:id', authentication, authorizeRoles("employees.view"), getProfileImage);
+router.get('/', authentication, authorizeRoles("employees.view"), getAllEmployee);
+router.get('/:id', authentication, authorizeRoles("employees.view"), getSingleEmployee);
 router.post('/', authentication, upload.single('profile_image'), addEmployee);
 
 module.exports = router;
