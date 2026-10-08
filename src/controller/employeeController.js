@@ -1,7 +1,8 @@
 const pool = require('../config/db');
 const argon2 = require('argon2');
 const path = require("path");
-const { employeeValidator, contactValidator } = require('../validator/employeeValidator');
+const employeeValidator = require('../validator/employeeValidator');
+const contactValidator = require('../validator/contactValidator.js');
 
 
 //Get single Employee
@@ -130,11 +131,11 @@ const addEmployee = async (req, res) => {
 
         const contactValidation = contactValidator.safeParse(incomingData);
         if (!contactValidation.success) {
-            const error = contactValidation.error.issues.map(err => err.message);
-            return res.status(400).json({ error });
+            const errors = contactValidation.error.issues.map(err => err.message);
+            return res.status(400).json({ errors });
         }
 
-        const { phone, status_id } = contactValidation.data;
+        const { content_type, company_id, phone, status_id } = contactValidation.data;
 
         const sql = `INSERT INTO employees (
             franchise_id,
@@ -154,7 +155,7 @@ const addEmployee = async (req, res) => {
             dob,
             gender,
             joining_date,
-            profile_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            profile_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
         const [employeeResult] = await connection.query(sql, [
             franchise_id,
@@ -178,9 +179,15 @@ const addEmployee = async (req, res) => {
         ]);
         const employeeId = employeeResult.insertId;
 
-        await connection.query(`INSERT INTO contacts (employee_id, company_id, franchise_id, phone, status_id) 
-            VALUES (?, ?, ?, ?, ?)`,
-            [employeeId, company_id ?? null, franchise_id ?? null, phone, status_id]);
+        await connection.query(`INSERT INTO contacts (contact_type, employee_id, company_id, franchise_id, phone, status_id) 
+            VALUES (?, ?, ?, ?, ?, ?)`,[
+                "Employee",
+                employeeId,
+                null,
+                null,
+                phone,
+                status_id
+            ]);
 
         await connection.commit();
         return res.status(201).json({ message: 'Record inserted successfully.' });

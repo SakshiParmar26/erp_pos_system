@@ -1,6 +1,6 @@
 const pool = require("../config/db");
-const companyValidator=require("../validator/companyValidator");
-const {contactValidator}=require("../validator/employeeValidator");
+const companyValidator=require("../validator/companyValidator.js");
+const {contactValidator}=require("../validator/contactValidator.js");
 
 //Get company details
 const getCompanyProfile=async (req,res) => {

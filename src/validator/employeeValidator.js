@@ -87,23 +87,5 @@ const employeeValidator = z.object({
 
 });
 
-const contactValidator = z.object({
-    company_id: z.coerce
-        .number()
-        .int()
-        .positive(),
 
-    franchise_id: z.coerce
-        .number()
-        .int()
-        .positive(),
-
-    phone: z.string()
-        .regex(/^[6-9]\d{9}$/, "Contact number must be a valid 10-digit number."),
-
-    status_id: z.coerce
-        .number()
-        .int()
-        .positive()
-});
-module.exports = { employeeValidator, contactValidator };
+module.exports = employeeValidator;
