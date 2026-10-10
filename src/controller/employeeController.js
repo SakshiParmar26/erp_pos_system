@@ -3,6 +3,8 @@ const argon2 = require('argon2');
 const path = require("path");
 const employeeValidator = require('../validator/employeeValidator');
 const contactValidator = require('../validator/contactValidator.js');
+const { object } = require('zod');
+const { error } = require('console');
 
 
 //Get single Employee
@@ -262,4 +264,42 @@ const changePassword = async (req, res) => {
     }
 
 };
-module.exports = { getSingleEmployee, getAllEmployee, getProfileImage, addEmployee, changePassword };
+
+//Update employee
+const updateEmployee = async (req, res) => {
+    const id = req.params;
+    try {
+        const updateSchema = employeeValidator.partial();
+        const validation = updateSchema.safeParse(req.body);
+
+        if (!validation.success) {
+            const error = validation.error.issues.map(err => err.message);
+            return res.status(400).json({ error: error});
+        }
+
+        const data = { ...validation.data };
+
+        const fields = Object.keys(data);
+        if (fields.length === 0) {
+            return res.status(400).json({ error: "No fields are provided for update." });
+        }
+        const setClause = fields
+            .map(fields => `${fields}=?`)
+            .join(", ");
+
+        const values = fields.map(fields => data[fields]);
+        values.push(id);
+
+        const [result] = await pool.query(`UPDATE employees SET ${setClause} WHERE id=?`, values);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Record not found.' });
+        }
+
+        return res.status(200).json({ message: 'Record updated successfully.' });
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
+    }
+};
+
+module.exports = { getSingleEmployee, getAllEmployee, getProfileImage, addEmployee, changePassword, updateEmployee };
